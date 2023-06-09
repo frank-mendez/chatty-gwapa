@@ -2,6 +2,8 @@ import Head from 'next/head'
 import Link from 'next/link'
 import React from 'react'
 import { useUser } from '@auth0/nextjs-auth0/client'
+import { getSession } from '@auth0/nextjs-auth0'
+import { NextPageContext } from 'next'
 
 const Home = () => {
 	const { user, error, isLoading } = useUser()
@@ -21,7 +23,7 @@ const Home = () => {
 							<Link className='rounded-md bg-emerald-500 px-4 py-2 text-white hover:bg-emerald-600' href='/api/auth/login'>
 								Log In
 							</Link>
-							<Link className='ml-2 rounded-md bg-emerald-500 px-4 py-2 text-white hover:bg-emerald-600' href='/api/auth/login'>
+							<Link className='ml-2 rounded-md bg-emerald-500 px-4 py-2 text-white hover:bg-emerald-600' href='/api/auth/signup'>
 								Sign Up
 							</Link>
 						</>
@@ -33,3 +35,18 @@ const Home = () => {
 }
 
 export default Home
+
+export const getServerSideProps = async (context: NextPageContext) => {
+	const session = await getSession(context.req!, context.res!)
+	if (session) {
+		return {
+			redirect: {
+				destination: '/chat',
+			},
+		}
+	}
+
+	return {
+		props: {},
+	}
+}
