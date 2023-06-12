@@ -2,6 +2,7 @@ import { ChatRole, MessageProps } from '@/pages/types'
 import { useUser } from '@auth0/nextjs-auth0/client'
 import Image from 'next/image'
 import React from 'react'
+import ReactMarkdown from 'react-markdown'
 
 const Message = (props: MessageProps) => {
 	const { role, content } = props
@@ -16,7 +17,9 @@ const Message = (props: MessageProps) => {
 					<Image src={'/gwapa.png'} width={30} height={30} className='rounded-sm shadow-md shadow/black-50' alt='Gwapa avatar' />
 				)}
 			</div>
-			<div>{content}</div>
+			<div className='prose prose-invert'>
+				<ReactMarkdown>{content}</ReactMarkdown>
+			</div>
 		</div>
 	)
 }

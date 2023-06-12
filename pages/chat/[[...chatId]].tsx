@@ -10,10 +10,11 @@ const Chat = () => {
 	const [message, setMessage] = useState<string>('')
 	const [incomingMessage, setIncomingMessage] = useState<string>('')
 	const [newMessages, setNewMessages] = useState<NewMessage[]>([])
+	const [generatingResponse, setGeneratingResponse] = useState<boolean>(false)
 
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault()
-		console.log('message', message)
+		setGeneratingResponse(true)
 		setNewMessages([...newMessages, { id: uuid(), role: ChatRole.USER, message }])
 		const response = await fetch(`/api/chat/sendMessage`, {
 			method: 'POST',
@@ -22,7 +23,7 @@ const Chat = () => {
 			},
 			body: JSON.stringify({ message }),
 		})
-
+		setMessage('')
 		const data = response.body
 		if (!data) {
 			return
@@ -30,9 +31,9 @@ const Chat = () => {
 
 		const reader = data.getReader()
 		await streamReader(reader, (message) => {
-			console.log('steamReader message', message)
 			setIncomingMessage((prevState) => `${prevState}${message.content}`)
 		})
+		setGeneratingResponse(false)
 	}
 
 	return (
@@ -51,11 +52,11 @@ const Chat = () => {
 					</div>
 					<footer className='bg-gray-800 p-10'>
 						<form onSubmit={handleSubmit}>
-							<fieldset className='flex gap-2'>
+							<fieldset className='flex gap-2' disabled={generatingResponse}>
 								<textarea
 									value={message}
 									onChange={(e) => setMessage(e.target.value)}
-									placeholder='Send message...'
+									placeholder={generatingResponse ? '' : 'Send message...'}
 									className='w-full resize-none rounded-md bg-gray-700 p-2 text-white focus:border-emerald-500 focus:bg-gray-600 focus:outline focus:outline-emerald-500'
 								/>
 								<button type='submit' className='btn'>
