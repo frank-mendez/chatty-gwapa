@@ -1,19 +1,29 @@
 import Sidebar from '@/components/Sidebar/Sidebar'
 import Head from 'next/head'
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { streamReader } from 'openai-edge-stream'
 import { ChatRole, NewMessage } from '../types'
 import { v4 as uuid } from 'uuid'
 import Message from '@/components/Message'
 import { useUser } from '@auth0/nextjs-auth0/client'
 import { createChat, sendMessage } from '@/services/chat.service'
+import { useRouter } from 'next/router'
 
 const Chat = () => {
 	const [message, setMessage] = useState<string>('')
+	const [newChatId, setNewChatId] = useState<string | null>(null)
 	const [incomingMessage, setIncomingMessage] = useState<string>('')
 	const [newMessages, setNewMessages] = useState<NewMessage[]>([])
 	const [generatingResponse, setGeneratingResponse] = useState<boolean>(false)
 	const { user } = useUser()
+	const router = useRouter()
+
+	useEffect(() => {
+		if (!generatingResponse && newChatId) {
+			setNewChatId(null)
+			router.push(`/chat/${newChatId}`)
+		}
+	}, [newChatId, generatingResponse, router])
 
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault()
@@ -27,7 +37,12 @@ const Chat = () => {
 
 		const reader = data.getReader()
 		await streamReader(reader, (message) => {
-			setIncomingMessage((prevState) => `${prevState}${message.content}`)
+			console.log('message', message)
+			if (message.event === 'newChatId') {
+				setNewChatId(message.content)
+			} else {
+				setIncomingMessage((prevState) => `${prevState}${message.content}`)
+			}
 		})
 		setGeneratingResponse(false)
 	}
