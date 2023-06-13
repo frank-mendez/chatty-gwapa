@@ -4,9 +4,7 @@ import { NextApiRequest, NextApiResponse } from 'next'
 
 export default async (req: NextApiRequest, res: NextApiResponse<any>) => {
 	const { userId } = req.query
-	console.log('userId', userId)
 	if (req.method === 'GET') {
-		console.log('userId', userId)
 		try {
 			const conn = await dbConnect()
 			if (conn) {
