@@ -27,7 +27,7 @@ const Sidebar = (props: { chatId?: string }) => {
 		if (user) {
 			generateChatList()
 		}
-	}, [user])
+	}, [user, chatId])
 
 	return (
 		<div className='flex flex-col overflow-hidden bg-gray-900 text-white'>

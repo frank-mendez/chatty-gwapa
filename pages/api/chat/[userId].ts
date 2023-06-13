@@ -8,7 +8,7 @@ export default async (req: NextApiRequest, res: NextApiResponse<any>) => {
 		try {
 			const conn = await dbConnect()
 			if (conn) {
-				const chat = await Chat.find({ userId }).exec()
+				const chat = await Chat.find({ userId }).sort({ createdAt: 'desc' }).exec()
 				if (chat) {
 					return res.send(chat)
 				} else {

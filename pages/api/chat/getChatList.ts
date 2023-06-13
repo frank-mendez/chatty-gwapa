@@ -9,7 +9,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
 		try {
 			const conn = await dbConnect()
 			if (conn) {
-				const chat = await Chat.findById(userId).exec()
+				const chat = await Chat.findById(userId).sort('-1').exec()
 				if (chat) {
 					return res.send(chat)
 				} else {

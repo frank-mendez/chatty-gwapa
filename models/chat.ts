@@ -18,20 +18,23 @@ export interface Messages {
 	}
 }
 
-const chatSchema = new Schema<IChat>({
-	userId: {
-		type: String,
-		required: true,
+const chatSchema = new Schema<IChat>(
+	{
+		userId: {
+			type: String,
+			required: true,
+		},
+		messages: {
+			type: [{ role: String, content: String }],
+			required: true,
+		},
+		title: {
+			type: String,
+			required: true,
+		},
 	},
-	messages: {
-		type: [{ role: String, content: String }],
-		required: true,
-	},
-	title: {
-		type: String,
-		required: true,
-	},
-})
+	{ timestamps: true }
+)
 
 export const Chat = mongoose.models.Chat || mongoose.model('Chat', chatSchema)
 

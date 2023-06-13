@@ -3,10 +3,10 @@ export enum ChatRole {
 	ASSISTANT = 'assistant',
 }
 
-export type NewMessage = {
+export type MessageType = {
 	id: string
 	role: ChatRole
-	message: string
+	content: string
 }
 
 export interface MessageProps {

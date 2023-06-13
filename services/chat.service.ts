@@ -1,3 +1,5 @@
+import dbConnect from '@/lib/mongodb'
+import Chat from '@/models/chat'
 import axios from 'axios'
 
 export type CreateChatDto = {

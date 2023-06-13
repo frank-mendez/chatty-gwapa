@@ -2,21 +2,32 @@ import Sidebar from '@/components/Sidebar/Sidebar'
 import Head from 'next/head'
 import React, { useEffect, useState } from 'react'
 import { streamReader } from 'openai-edge-stream'
-import { ChatRole, NewMessage } from '../types'
+import { ChatRole, MessageType } from '../types'
 import { v4 as uuid } from 'uuid'
 import Message from '@/components/Message'
 import { useUser } from '@auth0/nextjs-auth0/client'
-import { createChat, sendMessage } from '@/services/chat.service'
+import { sendMessage } from '@/services/chat.service'
 import { useRouter } from 'next/router'
+import { getSession } from '@auth0/nextjs-auth0'
+import dbConnect from '@/lib/mongodb'
+import Chat from '@/models/chat'
 
-const Chat = () => {
+const ChatPage = (props: { chatId?: string; title?: string; messages?: MessageType[] }) => {
 	const [message, setMessage] = useState<string>('')
 	const [newChatId, setNewChatId] = useState<string | null>(null)
 	const [incomingMessage, setIncomingMessage] = useState<string>('')
-	const [newMessages, setNewMessages] = useState<NewMessage[]>([])
+	const [newMessages, setNewMessages] = useState<MessageType[]>([])
 	const [generatingResponse, setGeneratingResponse] = useState<boolean>(false)
 	const { user } = useUser()
 	const router = useRouter()
+	const { chatId, messages = [] } = props
+
+	useEffect(() => {
+		if (chatId) {
+			setNewMessages([])
+			setNewChatId(null)
+		}
+	}, [chatId, setNewMessages, setNewChatId])
 
 	useEffect(() => {
 		if (!generatingResponse && newChatId) {
@@ -28,7 +39,8 @@ const Chat = () => {
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault()
 		setGeneratingResponse(true)
-		setNewMessages([...newMessages, { id: uuid(), role: ChatRole.USER, message }])
+		setMessage('')
+		setNewMessages([...newMessages, { id: uuid(), role: ChatRole.USER, content: message }])
 		const response = await sendMessage({ message, userId: user!.sid as string })
 		const data = response.body
 		if (!data) {
@@ -44,8 +56,11 @@ const Chat = () => {
 				setIncomingMessage((prevState) => `${prevState}${message.content}`)
 			}
 		})
+		setIncomingMessage('')
 		setGeneratingResponse(false)
 	}
+
+	const allMessages = [...messages, ...newMessages]
 
 	return (
 		<>
@@ -53,11 +68,11 @@ const Chat = () => {
 				<title>New Chat</title>
 			</Head>
 			<div className='grid h-screen grid-cols-[260px_1fr]'>
-				<Sidebar />
+				<Sidebar chatId={chatId} />
 				<div className='bg-gray-700 flex flex-col overflow-hidden'>
 					<div className='flex-1 text-white overflow-y-scroll'>
-						{newMessages.map((message) => (
-							<Message key={message.id} role={message.role} content={message.message} />
+						{allMessages.map((message) => (
+							<Message key={message.id} role={message.role} content={message.content} />
 						))}
 						{!!incomingMessage && <Message role={ChatRole.ASSISTANT} content={incomingMessage} />}
 					</div>
@@ -82,4 +97,38 @@ const Chat = () => {
 	)
 }
 
-export default Chat
+export default ChatPage
+
+export const getServerSideProps = async (context: any) => {
+	const chatId = context && context.params && context.params.chatId ? context.params.chatId?.[0] : null
+	const session = await getSession(context.req, context.res)
+	const user = session?.user
+
+	if (chatId && user) {
+		const conn = await dbConnect()
+		if (conn) {
+			const chat = await Chat.findOne({ userId: user.sid, _id: chatId }).sort('-1').exec()
+			console.log('chat', chat)
+			if (chat) {
+				return {
+					props: {
+						chatId,
+						title: chat.title,
+						messages: JSON.parse(JSON.stringify(chat.messages)),
+					},
+				}
+			}
+			return {
+				props: {},
+			}
+		} else {
+			return {
+				props: {},
+			}
+		}
+	}
+
+	return {
+		props: {},
+	}
+}
