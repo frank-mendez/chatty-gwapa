@@ -5,17 +5,15 @@ import { streamReader } from 'openai-edge-stream'
 import { ChatRole, MessageType } from '../types'
 import { v4 as uuid } from 'uuid'
 import Message from '@/components/Message'
-import { useUser } from '@auth0/nextjs-auth0/client'
 import { sendMessage } from '@/services/chat.service'
 import { useRouter } from 'next/router'
 import { getSession } from '@auth0/nextjs-auth0'
 import dbConnect from '@/lib/mongodb'
 import Chat from '@/models/chat'
 
-const ChatPage = (props: { chatId?: string; title?: string; messages?: MessageType[] }) => {
-	const { user } = useUser()
+const ChatPage = (props: { chatId?: string; title?: string; messages?: MessageType[]; userId: string }) => {
 	const router = useRouter()
-	const { chatId, messages = [] } = props
+	const { chatId, messages = [], userId } = props
 	const [message, setMessage] = useState<string>('')
 	const [newChatId, setNewChatId] = useState<string | null>(null)
 	const [incomingMessage, setIncomingMessage] = useState<string>('')
@@ -58,7 +56,7 @@ const ChatPage = (props: { chatId?: string; title?: string; messages?: MessageTy
 		setGeneratingResponse(true)
 		setMessage('')
 		setNewMessages([...newMessages, { id: uuid(), role: ChatRole.USER, content: message }])
-		const response = await sendMessage({ message, userId: user!.sid as string, chatId })
+		const response = await sendMessage({ message, userId, chatId })
 		const data = response.body
 		if (!data) {
 			return
@@ -89,7 +87,7 @@ const ChatPage = (props: { chatId?: string; title?: string; messages?: MessageTy
 				<title>New Chat</title>
 			</Head>
 			<div className='grid h-screen grid-cols-[260px_1fr]'>
-				<Sidebar chatId={chatId} />
+				<Sidebar chatId={chatId} userId={userId} />
 				<div className='bg-gray-700 flex flex-col overflow-hidden'>
 					<div className='flex-1 text-white overflow-y-scroll'>
 						{allMessages.map((message) => (
@@ -128,7 +126,7 @@ export const getServerSideProps = async (context: any) => {
 	if (chatId && user) {
 		const conn = await dbConnect()
 		if (conn) {
-			const chat = await Chat.findOne({ userId: user.sid, _id: chatId }).sort('-1').exec()
+			const chat = await Chat.findOne({ userId: user.sub, _id: chatId }).sort('-1').exec()
 			console.log('chat', chat)
 			if (chat) {
 				return {
@@ -136,6 +134,7 @@ export const getServerSideProps = async (context: any) => {
 						chatId,
 						title: chat.title,
 						messages: JSON.parse(JSON.stringify(chat.messages)),
+						userId: user.sub,
 					},
 				}
 			}
@@ -146,6 +145,14 @@ export const getServerSideProps = async (context: any) => {
 			return {
 				props: {},
 			}
+		}
+	}
+
+	if (user) {
+		return {
+			props: {
+				userId: user.sub,
+			},
 		}
 	}
 
