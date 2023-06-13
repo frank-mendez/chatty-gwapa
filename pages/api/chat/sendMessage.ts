@@ -9,27 +9,44 @@ export const config = {
 
 export default async (req: NextRequest, res: NextResponse<any>) => {
 	try {
-		const { message, userId } = await req.json()
+		const { message, userId, chatId: chatIdFromParam } = await req.json()
+		let chatId = chatIdFromParam
 		const initialMessage = {
 			role: 'system',
 			content:
 				'Your name is Gwapa. An incredibly intelligent and quick-thinking AI with Cat inspired name, that always replies with an enthusiastic and positive energy. You were created by Frank. Your response must be formatted as markdown',
 		}
+		let newChatId: string | null = null
+		if (chatId) {
+			await fetch(`${req.headers.get!('origin')}/api/chat/addMessageToChat`, {
+				method: 'POST',
+				headers: {
+					'content-type': 'application/json',
+					cookie: req!.headers!.get('cookie')!,
+				},
+				body: JSON.stringify({
+					chatId,
+					message: { role: 'user', content: message },
+					userId,
+				}),
+			})
+		} else {
+			const response = await fetch(`${req.headers.get!('origin')}/api/chat/createNewChat`, {
+				method: 'POST',
+				headers: {
+					'content-type': 'application/json',
+					cookie: req!.headers!.get('cookie')!,
+				},
+				body: JSON.stringify({
+					message,
+					userId,
+				}),
+			})
 
-		const response = await fetch(`${req.headers.get!('origin')}/api/chat/createNewChat`, {
-			method: 'POST',
-			headers: {
-				'content-type': 'application/json',
-				cookie: req!.headers!.get('cookie')!,
-			},
-			body: JSON.stringify({
-				message,
-				userId,
-			}),
-		})
-
-		const json = await response.json()
-		const chatId = json._id
+			const json = await response.json()
+			chatId = json._id
+			newChatId = json._id
+		}
 
 		const stream = await OpenAIEdgeStream(
 			'https://api.openai.com/v1/chat/completions',
@@ -47,7 +64,9 @@ export default async (req: NextRequest, res: NextResponse<any>) => {
 			},
 			{
 				onBeforeStream: async ({ emit }) => {
-					emit(chatId, 'newChatId')
+					if (newChatId) {
+						emit(newChatId, 'newChatId')
+					}
 				},
 				onAfterStream: async ({ fullContent }) => {
 					await fetch(`${req.headers.get!('origin')}/api/chat/addMessageToChat`, {

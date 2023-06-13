@@ -18,7 +18,7 @@ export const createChat = async (payload: CreateChatDto) => {
 	}
 }
 
-export const sendMessage = async (payload: { message: string; userId: string }) => {
+export const sendMessage = async (payload: { message: string; userId: string; chatId?: string }) => {
 	try {
 		const response = await fetch('/api/chat/sendMessage', {
 			method: 'POST',

@@ -13,15 +13,17 @@ import dbConnect from '@/lib/mongodb'
 import Chat from '@/models/chat'
 
 const ChatPage = (props: { chatId?: string; title?: string; messages?: MessageType[] }) => {
+	const { user } = useUser()
+	const router = useRouter()
+	const { chatId, messages = [] } = props
 	const [message, setMessage] = useState<string>('')
 	const [newChatId, setNewChatId] = useState<string | null>(null)
 	const [incomingMessage, setIncomingMessage] = useState<string>('')
 	const [newMessages, setNewMessages] = useState<MessageType[]>([])
 	const [generatingResponse, setGeneratingResponse] = useState<boolean>(false)
-	const { user } = useUser()
-	const router = useRouter()
-	const { chatId, messages = [] } = props
+	const [fullMessage, setFullMessage] = useState<string | null>('')
 
+	//Redirect when route changes
 	useEffect(() => {
 		if (chatId) {
 			setNewMessages([])
@@ -29,6 +31,7 @@ const ChatPage = (props: { chatId?: string; title?: string; messages?: MessageTy
 		}
 	}, [chatId, setNewMessages, setNewChatId])
 
+	// if we create new chat
 	useEffect(() => {
 		if (!generatingResponse && newChatId) {
 			setNewChatId(null)
@@ -36,26 +39,44 @@ const ChatPage = (props: { chatId?: string; title?: string; messages?: MessageTy
 		}
 	}, [newChatId, generatingResponse, router])
 
+	//save the new stream message
+	useEffect(() => {
+		if (!generatingResponse && fullMessage) {
+			setNewMessages((prev) => [
+				...prev,
+				{
+					id: uuid(),
+					role: ChatRole.ASSISTANT,
+					content: fullMessage,
+				},
+			])
+		}
+	}, [generatingResponse, fullMessage])
+
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault()
 		setGeneratingResponse(true)
 		setMessage('')
 		setNewMessages([...newMessages, { id: uuid(), role: ChatRole.USER, content: message }])
-		const response = await sendMessage({ message, userId: user!.sid as string })
+		const response = await sendMessage({ message, userId: user!.sid as string, chatId })
 		const data = response.body
 		if (!data) {
 			return
 		}
 
 		const reader = data.getReader()
+		let content: string = ''
 		await streamReader(reader, (message) => {
 			console.log('message', message)
 			if (message.event === 'newChatId') {
 				setNewChatId(message.content)
 			} else {
 				setIncomingMessage((prevState) => `${prevState}${message.content}`)
+				content = content + message.content
 			}
 		})
+
+		setFullMessage(content)
 		setIncomingMessage('')
 		setGeneratingResponse(false)
 	}
