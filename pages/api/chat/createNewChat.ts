@@ -19,8 +19,6 @@ export default async (req: NextApiRequest, res: NextApiResponse<any>) => {
 				title: message,
 			}
 
-			console.log('paylaod', payload)
-
 			if (conn) {
 				const chat = new Chat(payload)
 				await chat

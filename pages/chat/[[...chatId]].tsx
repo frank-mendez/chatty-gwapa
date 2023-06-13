@@ -65,7 +65,6 @@ const ChatPage = (props: { chatId?: string; title?: string; messages?: MessageTy
 		const reader = data.getReader()
 		let content: string = ''
 		await streamReader(reader, (message) => {
-			console.log('message', message)
 			if (message.event === 'newChatId') {
 				setNewChatId(message.content)
 			} else {
@@ -90,8 +89,8 @@ const ChatPage = (props: { chatId?: string; title?: string; messages?: MessageTy
 				<Sidebar chatId={chatId} userId={userId} />
 				<div className='bg-gray-700 flex flex-col overflow-hidden'>
 					<div className='flex-1 text-white overflow-y-scroll'>
-						{allMessages.map((message) => (
-							<Message key={message.id} role={message.role} content={message.content} />
+						{allMessages.map((message, index) => (
+							<Message key={index} role={message.role} content={message.content} />
 						))}
 						{!!incomingMessage && <Message role={ChatRole.ASSISTANT} content={incomingMessage} />}
 					</div>
@@ -127,7 +126,6 @@ export const getServerSideProps = async (context: any) => {
 		const conn = await dbConnect()
 		if (conn) {
 			const chat = await Chat.findOne({ userId: user.sub, _id: chatId }).sort('-1').exec()
-			console.log('chat', chat)
 			if (chat) {
 				return {
 					props: {

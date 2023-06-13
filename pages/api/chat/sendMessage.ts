@@ -1,3 +1,4 @@
+import { MessageType } from '@/pages/types'
 import { createChat } from '@/services/chat.service'
 import { NextApiRequest, NextApiResponse } from 'next'
 import { NextRequest, NextResponse } from 'next/server'
@@ -17,8 +18,9 @@ export default async (req: NextRequest, res: NextResponse<any>) => {
 				'Your name is Gwapa. An incredibly intelligent and quick-thinking AI with Cat inspired name, that always replies with an enthusiastic and positive energy. You were created by Frank. Your response must be formatted as markdown',
 		}
 		let newChatId: string | null = null
+		let chatMessages: MessageType[] = []
 		if (chatId) {
-			await fetch(`${req.headers.get!('origin')}/api/chat/addMessageToChat`, {
+			const response = await fetch(`${req.headers.get!('origin')}/api/chat/addMessageToChat`, {
 				method: 'POST',
 				headers: {
 					'content-type': 'application/json',
@@ -30,6 +32,10 @@ export default async (req: NextRequest, res: NextResponse<any>) => {
 					userId,
 				}),
 			})
+
+			const json = await response.json()
+			console.log('has chatId', json)
+			chatMessages = json.messages || []
 		} else {
 			const response = await fetch(`${req.headers.get!('origin')}/api/chat/createNewChat`, {
 				method: 'POST',
@@ -44,9 +50,35 @@ export default async (req: NextRequest, res: NextResponse<any>) => {
 			})
 
 			const json = await response.json()
+			console.log('no chatId', json)
 			chatId = json._id
 			newChatId = json._id
+			chatMessages = json.messages || []
 		}
+
+		const messageToInclude: MessageType[] = []
+		chatMessages.reverse()
+		let usedTokens: number = 0
+		for (let chatMessage of chatMessages) {
+			const messageTokens = chatMessage.content.length / 4
+			usedTokens = usedTokens + messageTokens
+			if (usedTokens <= +process.env.MAX_TOKENS!) {
+				messageToInclude.push(chatMessage)
+			} else {
+				break
+			}
+		}
+
+		messageToInclude.reverse()
+		const newMessage = messageToInclude.map((data) => {
+			return {
+				role: data.role,
+				content: data.content,
+			}
+		})
+
+		console.log('[initialMessage, ...messageToInclude]', [initialMessage, ...newMessage])
+		console.log('test', [initialMessage, { role: 'user', content: message }])
 
 		const stream = await OpenAIEdgeStream(
 			'https://api.openai.com/v1/chat/completions',
@@ -59,7 +91,7 @@ export default async (req: NextRequest, res: NextResponse<any>) => {
 				body: JSON.stringify({
 					model: 'gpt-3.5-turbo',
 					stream: true,
-					messages: [initialMessage, { role: 'user', content: message }],
+					messages: [initialMessage, ...newMessage], //messages: [initialMessage, { role: 'user', content: message }],
 				}),
 			},
 			{

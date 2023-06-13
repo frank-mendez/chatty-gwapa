@@ -13,14 +13,6 @@ export default async (req: NextApiRequest, res: NextApiResponse<any>) => {
 				content: message,
 			}
 
-			const payload = {
-				userId,
-				messages: [newUserMessage],
-				title: message,
-			}
-
-			console.log('paylaod', payload)
-
 			if (conn) {
 				const condition = { _id: chatId, userId }
 				const chat = await Chat.findOneAndUpdate(
