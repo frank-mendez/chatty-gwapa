@@ -6,7 +6,7 @@ import { ChatRole, NewMessage } from '../types'
 import { v4 as uuid } from 'uuid'
 import Message from '@/components/Message'
 import { useUser } from '@auth0/nextjs-auth0/client'
-import { createChat } from '@/services/chat.service'
+import { createChat, sendMessage } from '@/services/chat.service'
 
 const Chat = () => {
 	const [message, setMessage] = useState<string>('')
@@ -19,25 +19,16 @@ const Chat = () => {
 		e.preventDefault()
 		setGeneratingResponse(true)
 		setNewMessages([...newMessages, { id: uuid(), role: ChatRole.USER, message }])
-		const response = await createChat({ userId: user!.sid! as string, message })
-		console.log('response', response)
-		// const response = await fetch(`/api/chat/sendMessage`, {
-		// 	method: 'POST',
-		// 	headers: {
-		// 		'content-type': 'application/json',
-		// 	},
-		// 	body: JSON.stringify({ message }),
-		// })
-		// setMessage('')
-		// const data = response.body
-		// if (!data) {
-		// 	return
-		// }
+		const response = await sendMessage({ message, userId: user!.sid as string })
+		const data = response.body
+		if (!data) {
+			return
+		}
 
-		// const reader = data.getReader()
-		// await streamReader(reader, (message) => {
-		// 	setIncomingMessage((prevState) => `${prevState}${message.content}`)
-		// })
+		const reader = data.getReader()
+		await streamReader(reader, (message) => {
+			setIncomingMessage((prevState) => `${prevState}${message.content}`)
+		})
 		setGeneratingResponse(false)
 	}
 

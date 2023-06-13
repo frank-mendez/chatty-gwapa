@@ -6,7 +6,7 @@ export default async (req: NextApiRequest, res: NextApiResponse<any>) => {
 	const conn = await dbConnect()
 	if (req.method === 'POST') {
 		try {
-			const { message, userId } = req.body
+			const { message, userId, chatId } = req.body
 
 			const newUserMessage = {
 				role: 'user',
@@ -22,16 +22,20 @@ export default async (req: NextApiRequest, res: NextApiResponse<any>) => {
 			console.log('paylaod', payload)
 
 			if (conn) {
-				const chat = new Chat(payload)
-				await chat
-					.save()
-					.then((data: any) => {
-						return res.status(200).send(data)
-					})
-					.catch((err: any) => {
-						console.error(err)
-						return res.status(401).send(err)
-					})
+				const condition = { _id: chatId, userId }
+				const chat = await Chat.findOneAndUpdate(
+					condition,
+					{
+						$push: { messages: message },
+					},
+					{ returnDocument: 'after' }
+				).exec()
+
+				if (chat) {
+					return res.status(200).send(chat)
+				} else {
+					throw new Error('chat not found')
+				}
 			}
 
 			throw new Error('No DB connection')

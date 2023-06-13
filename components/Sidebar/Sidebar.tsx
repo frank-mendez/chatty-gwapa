@@ -6,7 +6,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import Link from 'next/link'
 import React, { useEffect, useState } from 'react'
 
-const Sidebar = (props: { chatId: string }) => {
+const Sidebar = (props: { chatId?: string }) => {
 	const [chatList, setChatList] = useState<IChat[]>([])
 	const { user } = useUser()
 	const { chatId } = props
@@ -14,7 +14,6 @@ const Sidebar = (props: { chatId: string }) => {
 	const generateChatList = async () => {
 		await getChatList({ userId: user!.sid! as string })
 			.then((data) => {
-				console.log('data', data)
 				if (data.data && data.data.length > 0) {
 					setChatList(data.data)
 				}
@@ -29,12 +28,6 @@ const Sidebar = (props: { chatId: string }) => {
 			generateChatList()
 		}
 	}, [user])
-
-	useEffect(() => {
-		if (chatList) {
-			console.log('chatList', chatList)
-		}
-	}, [chatList])
 
 	return (
 		<div className='flex flex-col overflow-hidden bg-gray-900 text-white'>

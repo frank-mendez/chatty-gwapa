@@ -5,11 +5,27 @@ export type CreateChatDto = {
 	message: string
 }
 
+//https://github.com/axios/axios/issues/5523
+//I ended up removing axios and using native fetch.
+
 export const createChat = async (payload: CreateChatDto) => {
 	try {
-		return await axios.post('/api/chat/createNewChat', payload).then((data) => {
-			return data
+		const response = await fetch(`/api/chat/createNewChat`, {})
+	} catch (error) {
+		throw new Error(`Something went wrong ${error}`)
+	}
+}
+
+export const sendMessage = async (payload: { message: string; userId: string }) => {
+	try {
+		const response = await fetch('/api/chat/sendMessage', {
+			method: 'POST',
+			headers: {
+				'content-type': 'application/json',
+			},
+			body: JSON.stringify(payload),
 		})
+		return response
 	} catch (error) {
 		throw new Error(`Something went wrong ${error}`)
 	}
