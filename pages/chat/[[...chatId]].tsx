@@ -43,8 +43,8 @@ const Chat = () => {
 			</Head>
 			<div className='grid h-screen grid-cols-[260px_1fr]'>
 				<Sidebar />
-				<div className='bg-gray-700 flex flex-col'>
-					<div className='flex-1 text-white'>
+				<div className='bg-gray-700 flex flex-col overflow-hidden'>
+					<div className='flex-1 text-white overflow-y-scroll'>
 						{newMessages.map((message) => (
 							<Message key={message.id} role={message.role} content={message.message} />
 						))}
