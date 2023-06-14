@@ -1,5 +1,4 @@
 import { MessageType } from '@/types'
-import { createChat } from '@/services/chat.service'
 import { NextApiRequest, NextApiResponse } from 'next'
 import { NextRequest, NextResponse } from 'next/server'
 import { OpenAIEdgeStream } from 'openai-edge-stream'
@@ -8,7 +7,7 @@ export const config = {
 	runtime: 'edge',
 }
 
-export default async function handler(req: NextRequest, res: NextResponse<any>) {
+export default async function (req: NextRequest, res: NextApiResponse<any>) {
 	try {
 		const { message, userId, chatId: chatIdFromParam } = await req.json()
 		let chatId = chatIdFromParam
@@ -117,8 +116,9 @@ export default async function handler(req: NextRequest, res: NextResponse<any>) 
 			}
 		)
 
-		return new NextResponse(stream)
+		return new Response(stream)
 	} catch (error) {
-		throw new Error(`Something went wrong ${error}`)
+		console.error('error', error)
+		return res.status(404).send(error)
 	}
 }

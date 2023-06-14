@@ -2,9 +2,8 @@ import dbConnect from '@/lib/mongodb'
 import Chat from '@/models/chat'
 import { NextApiRequest, NextApiResponse } from 'next'
 
-export default async function handler(req: NextApiRequest, res: NextApiResponse<any>) {
+export default async function (req: NextApiRequest, res: NextApiResponse<any>) {
 	const { userId } = req.query
-	console.log('userId', userId)
 	if (req.method === 'GET') {
 		try {
 			const conn = await dbConnect()
@@ -13,11 +12,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
 				if (chat) {
 					return res.send(chat)
 				} else {
-					throw new Error('chat not found')
+					return res.status(404).send('No Chat found')
 				}
 			}
 		} catch (error) {
-			console.error('error', error)
 			return res.status(404).send('chat not found')
 		}
 	}

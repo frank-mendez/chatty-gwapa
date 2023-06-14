@@ -2,7 +2,7 @@ import dbConnect from '@/lib/mongodb'
 import Chat from '@/models/chat'
 import { NextApiRequest, NextApiResponse } from 'next'
 
-export default async function handler(req: NextApiRequest, res: NextApiResponse<any>) {
+export default async function (req: NextApiRequest, res: NextApiResponse<any>) {
 	const conn = await dbConnect()
 	if (req.method === 'POST') {
 		try {
@@ -27,14 +27,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
 						return res.status(200).send(data)
 					})
 					.catch((err: any) => {
-						console.error(err)
 						return res.status(401).send(err)
 					})
 			}
-
-			throw new Error('No DB connection')
 		} catch (error) {
-			throw new Error(`Something wrong: ${error}`)
+			return res.status(401).send(error)
 		}
 	}
 }

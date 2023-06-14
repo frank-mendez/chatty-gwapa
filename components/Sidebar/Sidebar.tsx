@@ -26,6 +26,7 @@ const Sidebar = (props: { chatId?: string; userId: string }) => {
 		if (chatId) {
 			generateChatList()
 		}
+		generateChatList()
 	}, [generateChatList, chatId])
 
 	return (
