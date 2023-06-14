@@ -4,13 +4,13 @@ import { useUser } from '@auth0/nextjs-auth0/client'
 import { faMessage, faPlus, faRightFromBracket } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import Link from 'next/link'
-import React, { useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useState } from 'react'
 
 const Sidebar = (props: { chatId?: string; userId: string }) => {
 	const [chatList, setChatList] = useState<IChat[]>([])
 	const { chatId, userId } = props
 
-	const generateChatList = async () => {
+	const generateChatList = useCallback(async () => {
 		await getChatList({ userId })
 			.then((data) => {
 				if (data.data && data.data.length > 0) {
@@ -20,13 +20,11 @@ const Sidebar = (props: { chatId?: string; userId: string }) => {
 			.catch((err) => {
 				console.log('err', err)
 			})
-	}
+	}, [userId, chatId])
 
 	useEffect(() => {
-		if (userId) {
-			generateChatList()
-		}
-	}, [userId, chatId, generateChatList])
+		generateChatList()
+	}, [generateChatList])
 
 	return (
 		<div className='flex flex-col overflow-hidden bg-gray-900 text-white'>

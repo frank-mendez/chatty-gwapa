@@ -2,7 +2,7 @@ import dbConnect from '@/lib/mongodb'
 import Chat from '@/models/chat'
 import { NextApiRequest, NextApiResponse } from 'next'
 
-export default async (req: NextApiRequest, res: NextApiResponse<any>) => {
+export default async function handler(req: NextApiRequest, res: NextApiResponse<any>) {
 	const { userId } = req.query
 	if (req.method === 'GET') {
 		try {
