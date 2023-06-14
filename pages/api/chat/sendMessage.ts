@@ -1,4 +1,4 @@
-import { MessageType } from '@/pages/types'
+import { MessageType } from '@/types'
 import { createChat } from '@/services/chat.service'
 import { NextApiRequest, NextApiResponse } from 'next'
 import { NextRequest, NextResponse } from 'next/server'

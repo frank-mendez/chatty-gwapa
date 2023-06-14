@@ -1,4 +1,4 @@
-import { ChatRole, MessageProps } from '@/pages/types'
+import { ChatRole, MessageProps } from '@/types'
 import { useUser } from '@auth0/nextjs-auth0/client'
 import Image from 'next/image'
 import React from 'react'
