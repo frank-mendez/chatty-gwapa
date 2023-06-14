@@ -8,7 +8,7 @@ export const config = {
 	runtime: 'edge',
 }
 
-export default async (req: NextRequest, res: NextResponse<any>) => {
+export default async function handler(req: NextRequest, res: NextResponse<any>) {
 	try {
 		const { message, userId, chatId: chatIdFromParam } = await req.json()
 		let chatId = chatIdFromParam
