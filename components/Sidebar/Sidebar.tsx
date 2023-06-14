@@ -20,11 +20,13 @@ const Sidebar = (props: { chatId?: string; userId: string }) => {
 			.catch((err) => {
 				console.log('err', err)
 			})
-	}, [userId, chatId])
+	}, [userId])
 
 	useEffect(() => {
-		generateChatList()
-	}, [generateChatList])
+		if (chatId) {
+			generateChatList()
+		}
+	}, [generateChatList, chatId])
 
 	return (
 		<div className='flex flex-col overflow-hidden bg-gray-900 text-white'>
